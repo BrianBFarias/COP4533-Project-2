@@ -1,5 +1,5 @@
-import java.util.Arrays;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.Scanner;
 
@@ -7,62 +7,58 @@ class Program4 {
     public record Result(int numPlatforms, int totalHeight, int[] numPaintings) {}
 
     private static Result program4(int n, int W, int[] heights, int[] widths) {
-        Integer[] indices = new Integer[n];
-        for (int i = 0; i < n; i++) indices[i] = i;
-        Arrays.sort(indices, (i, j) -> Integer.compare(heights[j], heights[i])); // Sort indices by height in descending order
+        // minimal total height for the first i paintings
+        int[] dp = new int[n + 1];
+        dp[0] = 0; 
 
+        // stores the index where the last platform starts
+        int[] prev = new int[n + 1];
+
+        // Initialize dp array with MAX values
+        for (int i = 1; i <= n; i++) {
+            dp[i] = Integer.MAX_VALUE;
+        }
+
+        // process grouping of each painting
+        for (int i = 1; i <= n; i++) {
+            // looking back from i painting
+            for (int j = i - 1; j >= 0; j--) {
+                int totalWidth = 0;
+                int maxHeight = 0;
+
+                // Compute totalWidth and maxHeight for paintings from j to i - 1
+                for (int k = j; k < i; k++) {
+                    totalWidth += widths[k];
+                    maxHeight = Math.max(maxHeight, heights[k]);
+                }
+
+                if (totalWidth > W) {
+                    break;
+                }
+
+                if (dp[j] + maxHeight < dp[i]) {
+                    dp[i] = dp[j] + maxHeight;
+                    prev[i] = j;
+                }
+            }
+        }
+
+        // Reconstruct the arrangement of platforms
         List<Integer> numPaintingsList = new ArrayList<>();
-        int totalHeight = 0;
-        int i = 0;
-
-        // Estimate number of platforms based on width and minimum painting width
-        int estimatedPlatforms = (int) Math.ceil((double) n / Math.max(1, W / Arrays.stream(widths).min().orElse(1)));
-
-        while (i < n) { // Main loop to allocate paintings to platforms
-            int currentPlatformWidth = 0;
-            int maxHeight = 0;
-            int paintingsOnPlatform = 0;
-
-            // Target number of paintings per platform for balanced distribution
-            int remainingPaintings = n - i;
-            int targetPaintingsPerPlatform = Math.max(1, remainingPaintings / estimatedPlatforms);
-
-            // Add paintings to current platform within width and target limit
-            while (i < n && currentPlatformWidth + widths[indices[i]] <= W && paintingsOnPlatform < targetPaintingsPerPlatform) {
-                currentPlatformWidth += widths[indices[i]];
-                maxHeight = Math.max(maxHeight, heights[indices[i]]);
-                paintingsOnPlatform++;
-                i++;
-            }
-
-            // Nested loop for additional height calculation
-            for (int j = 0; j < i; j++) {
-                for (int k = 0; k < i; k++) {
-                    totalHeight += (heights[indices[j]] - heights[indices[k]]) % 100;
-                }
-            }
-
-            numPaintingsList.add(paintingsOnPlatform); // Store painting count for this platform
-            totalHeight += maxHeight; // Add platform height to total height
-            estimatedPlatforms = Math.max(1, estimatedPlatforms - 1); // Update remaining platform count
+        int index = n;
+        while (index > 0) {
+            int start = prev[index];
+            numPaintingsList.add(index - start);
+            index = start;
         }
 
-        // Post-processing to balance painting distribution across platforms
-        for (int j = 0; j < numPaintingsList.size() - 1; j++) {
-            while (Math.abs(numPaintingsList.get(j) - numPaintingsList.get(j + 1)) > 1) {
-                // Adjust counts to ensure difference is at most 1
-                if (numPaintingsList.get(j) > numPaintingsList.get(j + 1)) {
-                    numPaintingsList.set(j, numPaintingsList.get(j) - 1);
-                    numPaintingsList.set(j + 1, numPaintingsList.get(j + 1) + 1);
-                } else {
-                    numPaintingsList.set(j, numPaintingsList.get(j) + 1);
-                    numPaintingsList.set(j + 1, numPaintingsList.get(j + 1) - 1);
-                }
-            }
-        }
+        // List reversed
+        Collections.reverse(numPaintingsList);
 
         int numPlatforms = numPaintingsList.size();
         int[] numPaintings = numPaintingsList.stream().mapToInt(Integer::intValue).toArray();
+        int totalHeight = dp[n];
+
         return new Result(numPlatforms, totalHeight, numPaintings);
     }
 
