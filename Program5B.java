@@ -20,8 +20,8 @@ class Program5B{
         int[] prev = new int[n + 1]; // prev[i] stores the index where the last platform starts
         
         Arrays.fill(dp, Integer.MAX_VALUE);
-        dp[0] = 0; // Base case: no height needed when no paintings are placed
-        prev[0] = -1; // No previous index for the base case
+        dp[0] = 0; // No height needed when no paintings are placed
+        prev[0] = -1; // no prev for first
 
         for (int i = 1; i <= n; i++) {
             int widthSum = 0;
@@ -29,11 +29,11 @@ class Program5B{
 
             for (int j = i; j > 0; j--) {
                 widthSum += widths[j - 1];
-                if (widthSum > w) break; // If width exceeds limit, stop this grouping
+                if (widthSum > w) break; // cancel grouping if width exceeds limit
                 
                 maxHeight = Math.max(maxHeight, heights[j - 1]);
 
-                // Check if grouping paintings [j, i] on a new platform minimizes the total height
+                // Check if grouping paintings [j, i] on new platform minimizes total height
                 if (dp[j - 1] + maxHeight < dp[i]) {
                     dp[i] = dp[j - 1] + maxHeight;
                     prev[i] = j - 1; // Store the starting index of this platform
@@ -50,7 +50,7 @@ class Program5B{
             index = start;
         }
 
-        // Reverse the list to get the correct order
+        // Reverse the list
         Collections.reverse(numPaintingsList);
 
         int numPlatforms = numPaintingsList.size();
