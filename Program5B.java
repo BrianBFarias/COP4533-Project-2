@@ -1,4 +1,7 @@
+import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
+import java.util.List;
 import java.util.Scanner;
 
 class Program5B{
@@ -13,39 +16,47 @@ class Program5B{
     * @return Result object containing the number of platforms, total height of the paintings and the number of paintings on each platform
     */
     private static Result program5B(int n, int w, int[] heights, int[] widths) {
-        int[] dp = new int[n + 1]; // dp[i] stores the minimum height for the first i sculptures
-        int[] platformCount = new int[n + 1]; // platformCount[i] stores the number of platforms needed for dp[i]
-        int[] numPaintingsOnPlatform = new int[n + 1]; // Temporary storage for number of paintings per platform
+        int[] dp = new int[n + 1]; // dp[i] stores the minimum height for the first i paintings
+        int[] prev = new int[n + 1]; // prev[i] stores the index where the last platform starts
         
         Arrays.fill(dp, Integer.MAX_VALUE);
-        dp[0] = 0; // Base case: no height needed when no sculptures are placed
-        platformCount[0] = 0; // Zero platforms when no sculptures are placed
+        dp[0] = 0; // Base case: no height needed when no paintings are placed
+        prev[0] = -1; // No previous index for the base case
 
         for (int i = 1; i <= n; i++) {
             int widthSum = 0;
             int maxHeight = 0;
-            int paintingsOnCurrentPlatform = 0;
 
             for (int j = i; j > 0; j--) {
                 widthSum += widths[j - 1];
                 if (widthSum > w) break; // If width exceeds limit, stop this grouping
                 
                 maxHeight = Math.max(maxHeight, heights[j - 1]);
-                paintingsOnCurrentPlatform = i - j + 1;
 
-                // Check if grouping sculptures [j, i] on a new platform minimizes the total height
-                if (dp[i] > dp[j - 1] + maxHeight) {
+                // Check if grouping paintings [j, i] on a new platform minimizes the total height
+                if (dp[j - 1] + maxHeight < dp[i]) {
                     dp[i] = dp[j - 1] + maxHeight;
-                    platformCount[i] = platformCount[j - 1] + 1;
-                    numPaintingsOnPlatform[platformCount[i] - 1] = paintingsOnCurrentPlatform;
+                    prev[i] = j - 1; // Store the starting index of this platform
                 }
             }
         }
 
-        // Construct result for the number of paintings on each platform
-        int[] numPaintings = Arrays.copyOf(numPaintingsOnPlatform, platformCount[n]);
+        // Reconstruct the number of paintings on each platform
+        List<Integer> numPaintingsList = new ArrayList<>();
+        int index = n;
+        while (index > 0) {
+            int start = prev[index];
+            numPaintingsList.add(index - start);
+            index = start;
+        }
 
-        return new Result(platformCount[n], dp[n], numPaintings);
+        // Reverse the list to get the correct order
+        Collections.reverse(numPaintingsList);
+
+        int numPlatforms = numPaintingsList.size();
+        int[] numPaintings = numPaintingsList.stream().mapToInt(Integer::intValue).toArray();
+
+        return new Result(numPlatforms, dp[n], numPaintings);
     }
 
         
