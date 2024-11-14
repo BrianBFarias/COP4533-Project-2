@@ -1,72 +1,41 @@
-import java.util.ArrayList;
 import java.util.Scanner;
 
-class Program3{
+class Program3 {
+    
     public record Result(int numPlatforms, int totalHeight, int[] numPaintings) {}
-   
-    /**
-    * Solution to program 3
-    * @param n number of paintings
-    * @param w width of the platform
-    * @param heights array of heights of the paintings
-    * @param widths array of widths of the paintings
-    * @return Result object containing the number of platforms, total height of the paintings and the number of paintings on each platform
-    */
 
-    private static int minTotalHeight = Integer.MAX_VALUE;
-    private static int bestNumPlatforms = 0; 
-    private static int[] bestNumPaintings;
-
-    private static Result program3(int n, int w, int[] heights, int[] widths) {
-       
-        bestNumPaintings = new int[n];
-
-        findMinHeight(heights, widths, w, 0, new ArrayList<>(), 0, new ArrayList<>());
+    //idea: try every way to partition paintings into rows and calculate cost (recursively)
+    private static int minimize_cost(int[] heights, int[] widths, int maxWidth, int n, int i) {
+        //base case (if we have reached the last painting in our array, in other words, when i == n, where n represents the number of paintings)
+        if (i == n) {
+            return 0; //return 0 because no more rows left to form
+        }
         
-        int[] finalNumPaintings = new int[bestNumPlatforms];
-        return new Result(bestNumPlatforms, minTotalHeight, finalNumPaintings);
-        //time: O(n^(2n-1))
+        int minCost = Integer.MAX_VALUE; //the minimum cost will be initially set to the maximum value possible
+        int currWidth = 0; //will be used to keep track of the width of the row
+        int currMaxHeight = 0; //used to keep track of the tallest painting
+        
+        //loop through array starting from the index passed through minimize_cost helper function (or the current index)
+        for (int j = i; j < n; j++) { //while the index is less than the number of total paintings, increment by 1
+            currWidth += widths[j]; //add the width at this index to the running width
+            if (currWidth > maxWidth) { //if the currWidth greater than maxWidth break (implies new row)
+                break; 
+            }
+            currMaxHeight = Math.max(currMaxHeight, heights[j]); //update the currMaxHeight while iterating
+            int cost = currMaxHeight + minimize_cost(heights, widths, maxWidth, n, j + 1); //calculate the cost for the remaining paintings recursively by incrementing by one
+            minCost = Math.min(minCost, cost); //update local minCost
+        }
+        
+        return minCost; //return local minCost
     }
 
-    private static void findMinHeight(int[] heights, int[] widths, int W, int index, ArrayList<Integer> currentRow, int currentHeight, ArrayList<ArrayList<Integer>> platforms){
-        int n = heights.length; 
-
-        //base case
-        if (index == n) {
-            if (currentHeight < minTotalHeight) {
-                minTotalHeight = currentHeight;
-                bestNumPlatforms = platforms.size();
-                for (int i = 0; i < bestNumPlatforms; i++) {
-                    bestNumPaintings[i] = platforms.get(i).size();
-                }
-            }
-            return;
-        }
-
-        int paintingWidth = widths[index];
-        int paintingHeight = heights[index];
-
-        //case 1: place painting in new platform / row
-        ArrayList<Integer> newPlatform = new ArrayList<>(); 
-        newPlatform.add(index);
-        platforms.add(newPlatform);
-        findMinHeight(heights, widths, W, index+1, newPlatform, currentHeight + paintingHeight, platforms);
-        platforms.remove(platforms.size()-1);
-
-        //case 2: place painting in existing platform or row
-        if (!currentRow.isEmpty()){
-            int currentRowWidth = currentRow.stream().mapToInt(i -> widths[i]).sum();
-            int maxRowHeight = currentRow.stream().mapToInt(i -> heights[i]).max().orElse(0);
-
-            if (currentRowWidth + paintingWidth <= W){
-                currentRow.add(index);
-                int updatedHeight = currentHeight - maxRowHeight + Math.max(maxRowHeight, paintingHeight);
-                findMinHeight(heights, widths, W, index+1, currentRow, updatedHeight, platforms);
-                currentRow.remove(currentRow.size()-1);
-            }
-        }
-    }   
-
+    private static Result program3(int n, int w, int[] heights, int[] widths) {
+        //calculate totalMinCost by running the minimize_cost function starting from index 0
+        int totalMinCost = minimize_cost(heights, widths, w, n, 0);
+        //add Code
+        return new Result(n, 0, heights);
+        // return new Result(numPlatforms, totalMinCost, numPaintings);
+    }
 
     public static void main(String[] args){
         Scanner sc = new Scanner(System.in);
