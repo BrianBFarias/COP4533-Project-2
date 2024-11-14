@@ -32,9 +32,31 @@ class Program3 {
     private static Result program3(int n, int w, int[] heights, int[] widths) {
         //calculate totalMinCost by running the minimize_cost function starting from index 0
         int totalMinCost = minimize_cost(heights, widths, w, n, 0);
-        //add Code
-        return new Result(n, 0, heights);
-        // return new Result(numPlatforms, totalMinCost, numPaintings);
+        // Calculate the number of platforms (rows). This is the number of times we make a partition
+        int numPlatforms = 0;
+        int currentWidth = 0;
+        for (int i = 0; i < n; i++) {
+            currentWidth += widths[i];
+            if (currentWidth > w) {
+                numPlatforms++;
+                currentWidth = widths[i]; // Start a new platform with the current painting
+            }
+        }
+        numPlatforms++; // Account for the last platform
+
+        // Create an array to store the number of paintings in each platform
+        int[] numPaintings = new int[numPlatforms];
+        int platformIndex = 0;
+        currentWidth = 0;
+        for (int i = 0; i < n; i++) {
+            currentWidth += widths[i];
+            if (currentWidth > w) {
+                platformIndex++;
+                currentWidth = widths[i]; // Start a new platform
+            }
+            numPaintings[platformIndex]++;
+        }
+        return new Result(numPlatforms, totalMinCost, numPaintings);
     }
 
     public static void main(String[] args){
